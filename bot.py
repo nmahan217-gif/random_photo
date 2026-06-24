@@ -1,74 +1,32 @@
-from telegram import Update
-from telegram.ext import Application, CommandHandler, MessageHandler, ContextTypes, filters
-import random
 import os
-import sqlite3
+from telegram import Update
+from telegram.ext import Application, CommandHandler, ContextTypes
 
-TOKEN = os.getenv("TOKEN")
+# گرفتن توکن از محیط (Railway / Render / Local)
+TOKEN = os.getenv("8828158985:AAGVLBXpKshC1f2NtbICPBhdvVoGb1kf9g0")
 
-conn = sqlite3.connect("game.db", check_same_thread=False)
-cur = conn.cursor()
+if not TOKEN:
+    raise ValueError("TOKEN پیدا نشد! تو Railway Variables اضافه‌اش کن")
 
-cur.execute("""
-CREATE TABLE IF NOT EXISTS users (
-    user_id INTEGER PRIMARY KEY,
-    level INTEGER DEFAULT 1,
-    xp INTEGER DEFAULT 0
-)
-""")
-conn.commit()
-
-
-def add_xp(user_id, amount=10):
-    cur.execute("SELECT level, xp FROM users WHERE user_id=?", (user_id,))
-    row = cur.fetchone()
-
-    if not row:
-        cur.execute("INSERT INTO users (user_id, level, xp) VALUES (?, 1, 0)", (user_id,))
-        level, xp = 1, 0
-    else:
-        level, xp = row
-
-    xp += amount
-
-    if xp >= 100:
-        level += 1
-        xp = 0
-
-    cur.execute("UPDATE users SET level=?, xp=? WHERE user_id=?", (level, xp, user_id))
-    conn.commit()
-
-    return level, xp
-
-
+# /start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("ربات فعال است")
+    await update.message.reply_text("ربات روشنه 🔥")
 
+# /help
+async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("دستورات: /start")
 
-# اینجا برای گروه و خصوصی هر دو کار می‌کند
-async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user = update.message.from_user
+def main():
+    # ساخت اپلیکیشن درست (مهم‌ترین بخش)
+    app = Application.builder().token(TOKEN).build()
 
-    level, xp = add_xp(user.id, random.randint(5, 20))
+    # هندلرها
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(CommandHandler("help", help_command))
 
-    captions = [
-        "عکس ثبت شد",
-        "آپلود گروهی",
-        "سیستم دریافت کرد",
-        "عکس رندوم"
-    ]
+    # اجرا
+    print("Bot is running...")
+    app.run_polling()
 
-    text = random.choice(captions)
-
-    await update.message.reply_photo(
-        photo=update.message.photo[-1].file_id,
-        caption=f"{text}\nLevel: {level} | XP: {xp}/100"
-    )
-
-
-app = Application.builder().token(TOKEN).build()
-
-app.add_handler(CommandHandler("start", start))
-app.add_handler(MessageHandler(filters.PHOTO, handle_photo))
-
-app.run_polling()
+if name == "main":
+    main()
