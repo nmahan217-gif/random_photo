@@ -5,7 +5,7 @@ from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 
 import os
-TOKEN = os.getenv("8828158985:AAGVLBXpKshC1f2NtbICPBhdvVoGb1kf9g0")
+TOKEN = os.getenv("TOKEN")
 
 # دیتابیس ساده
 conn = sqlite3.connect("game.db", check_same_thread=False)
@@ -78,5 +78,5 @@ def main():
     app.run_polling()
 
 
-if name == "main":
+if __name__ == "__main__":
     main()
