@@ -1,13 +1,11 @@
-import logging
-import random
-import sqlite3
 from telegram import Update
-from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
-
+from telegram.ext import Application, CommandHandler, MessageHandler, ContextTypes, filters
+import random
 import os
-TOKEN = os.getenv("8828158985:AAGVLBXpKshC1f2NtbICPBhdvVoGb1kf9g0")
+import sqlite3
 
-# دیتابیس ساده
+TOKEN = os.getenv("TOKEN")
+
 conn = sqlite3.connect("game.db", check_same_thread=False)
 cur = conn.cursor()
 
@@ -19,6 +17,7 @@ CREATE TABLE IF NOT EXISTS users (
 )
 """)
 conn.commit()
+
 
 def add_xp(user_id, amount=10):
     cur.execute("SELECT level, xp FROM users WHERE user_id=?", (user_id,))
@@ -32,7 +31,6 @@ def add_xp(user_id, amount=10):
 
     xp += amount
 
-    # لول آپ ساده
     if xp >= 100:
         level += 1
         xp = 0
@@ -44,19 +42,20 @@ def add_xp(user_id, amount=10):
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("ربات فعال شد. عکس بفرست تا لول آپ بگیری")
+    await update.message.reply_text("ربات فعال است")
 
 
+# اینجا برای گروه و خصوصی هر دو کار می‌کند
 async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.message.from_user
 
-    level, xp = add_xp(user.id, amount=random.randint(5, 20))
+    level, xp = add_xp(user.id, random.randint(5, 20))
 
     captions = [
-        "عکس رندوم ",
-        "آپلود شد!",
-        "سیستم ثبت کرد 📸",
-        "عکس دریافت شد"
+        "عکس ثبت شد",
+        "آپلود گروهی",
+        "سیستم دریافت کرد",
+        "عکس رندوم"
     ]
 
     text = random.choice(captions)
@@ -67,16 +66,9 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
-def main():
-    logging.basicConfig(level=logging.INFO)
+app = Application.builder().token(TOKEN).build()
 
-    app = Application.builder().token(TOKEN).build()
+app.add_handler(CommandHandler("start", start))
+app.add_handler(MessageHandler(filters.PHOTO, handle_photo))
 
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(MessageHandler(filters.PHOTO, handle_photo))
-
-    app.run_polling()
-
-
-if name == "main":
-    main()
+app.run_polling()
